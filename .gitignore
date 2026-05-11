@@ -1,0 +1,15 @@
+# Build artifacts and outputs
+.build-context/
+output/
+.state/
+
+# Staging copies / vendored module sources (fetched fresh by build.sh)
+kernel-builder/
+
+# Patches are fetched from https://github.com/klizas/t2-kernel-patches at build time
+patches/
+
+# Editor / OS noise
+*.swp
+*.swo
+.DS_Store
