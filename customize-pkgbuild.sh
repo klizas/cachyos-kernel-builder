@@ -52,9 +52,8 @@ source+=(
     "0001-amdgpu-mclk-override.patch"
     "0001-brcmfmac-suspend-fix.patch"
     "0001-touchbar-suspend-resume.patch"
-    "0001-vga-switcheroo-no-defer-on-dgpu-t2.patch"
 )
-sha256sums+=(SKIP SKIP SKIP SKIP)
+sha256sums+=(SKIP SKIP SKIP)
 PATCH_SOURCES
 
 # --- 3. Add apple-bce-drv build to build() ---
