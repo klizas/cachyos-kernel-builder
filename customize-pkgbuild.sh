@@ -28,6 +28,19 @@ sed -i 's/^pkgbase="linux-\$_pkgsuffix"/pkgbase="linux-cachyos-t2"/' "$PKGBUILD"
 sed -i '/replaces=(linux-cachyos-lto)/d' "$PKGBUILD"
 sed -i '/replaces=(linux-cachyos-lto-headers)/d' "$PKGBUILD"
 
+# --- 1c. Disable in-tree apple-bce (CachyOS ships a buggy version) ---
+# We install our own apple-bce.ko into extramodules (steps 3-5 below).
+# CONFIG_APPLE_BCE=m would also build drivers/staging/apple-bce/apple-bce.ko
+# inside the kernel tree, producing two modules with the same name in one
+# package. Disable it here so only our out-of-tree build ships.
+# Anchor: insert right after `cp ../config .config` in prepare(), before
+# any `scripts/config` calls or `make prepare` reconciles the config.
+sed -i '/^[[:space:]]*cp \.\.\/config \.config/a\
+\
+    ### Disable in-tree apple-bce (we ship out-of-tree klizas/apple-bce-drv)\
+    scripts/config -d APPLE_BCE
+' "$PKGBUILD"
+
 # --- 2. Add custom patches to source array ---
 # The prepare() function already applies all .patch files from source,
 # so we just need to add ours. We append after the source=() block closes.
