@@ -1,0 +1,116 @@
+name: Build kernel
+
+on:
+  schedule:
+    # Daily at 04:30 UTC. Most runs are no-ops (version unchanged) and cost ~1 min.
+    - cron: "30 4 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Rebuild even if the latest version was already built"
+        type: boolean
+        default: false
+
+# Needed to publish packages to the rolling 'latest' release.
+permissions:
+  contents: write
+
+concurrency:
+  group: build-kernel
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: latest
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Kernel builds (esp. LTO) blow past the ~14 GB free on '/'. Reclaim ~25 GB.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android \
+                      /opt/hostedtoolcache /usr/local/share/boost
+          sudo docker image prune -af || true
+          df -h /
+
+      # Pull the existing repo (packages + db + state marker) so build.sh's
+      # dedup, keep-2-versions cleanup, and repo-add operate on real state.
+      # Runners are ephemeral; the GitHub release IS our persistent .state/output.
+      - name: Restore previous repo state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p output .state
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Found '$RELEASE_TAG' release, downloading assets..."
+            gh release download "$RELEASE_TAG" --dir output --skip-existing || true
+            # last-built-version is a state marker, not part of the pacman repo.
+            if [ -f output/last-built-version ]; then
+              mv output/last-built-version .state/last-built-version
+            fi
+            cat .state/last-built-version 2>/dev/null || echo "(no version marker)"
+          else
+            echo "No '$RELEASE_TAG' release yet — first build."
+          fi
+
+      - name: Build kernel
+        run: |
+          # build.sh's container writes packages + repo db as the 'builder'
+          # user (uid 1000); the runner-owned output/ dir blocks that. World-
+          # writable dir lets the container create/replace/delete; host-side
+          # cleanup still works (unlink is governed by dir write perm).
+          chmod 777 output
+          if [ "${{ inputs.force }}" = "true" ]; then
+            ./build.sh --force
+          else
+            ./build.sh
+          fi
+
+      # Publish whatever is now in output/ to the rolling release. If build.sh
+      # short-circuited (version unchanged) this just re-uploads identical
+      # assets, which --clobber makes a harmless no-op.
+      - name: Publish repo to release
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! ls output/*.pkg.tar.zst >/dev/null 2>&1; then
+            echo "No packages to publish."
+            exit 0
+          fi
+          cp .state/last-built-version output/last-built-version 2>/dev/null || true
+
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" \
+              --title "Custom CachyOS T2 kernel (rolling)" \
+              --notes "Rolling pacman repo. Latest build: $(cat .state/last-built-version 2>/dev/null || echo unknown)"
+          else
+            gh release edit "$RELEASE_TAG" \
+              --notes "Rolling pacman repo. Latest build: $(cat .state/last-built-version 2>/dev/null || echo unknown)"
+          fi
+
+          # Upload packages, the pacman db/files, and the state marker.
+          # repo-add makes custom-kernel.db a symlink -> .db.tar.zst; uploading
+          # it sends the resolved content under the name pacman fetches.
+          gh release upload "$RELEASE_TAG" --clobber \
+            output/*.pkg.tar.zst \
+            output/custom-kernel.db output/custom-kernel.db.tar.zst \
+            output/custom-kernel.files output/custom-kernel.files.tar.zst \
+            output/last-built-version
+
+          # Prune stale package assets that build.sh's keep-2 cleanup dropped,
+          # so the release exactly mirrors output/ (--clobber only overwrites).
+          keep=$(cd output && ls -1 *.pkg.tar.zst | sort)
+          gh release view "$RELEASE_TAG" --json assets \
+            --jq '.assets[].name | select(endswith(".pkg.tar.zst"))' \
+          | while read -r asset; do
+              if ! grep -qxF "$asset" <<<"$keep"; then
+                echo "Pruning stale asset: $asset"
+                gh release delete-asset "$RELEASE_TAG" "$asset" -y
+              fi
+            done
