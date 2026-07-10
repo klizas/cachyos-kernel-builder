@@ -127,17 +127,13 @@ NEW_PKGS=("$OUTPUT_DIR"/linux-cachyos-t2-"${REMOTE_VERSION}"-*.pkg.tar.zst
 
 REPO_ADD_LOG="$STATE_DIR/repo-add.log"
 run_repo_add() {
-    if command -v repo-add &>/dev/null; then
-        repo-add "$OUTPUT_DIR/custom-kernel.db.tar.zst" "${NEW_PKGS[@]}" 2>&1
-    else
-        # Build the package list for inside the container
-        local pkg_args=""
-        for pkg in "${NEW_PKGS[@]}"; do
-            pkg_args+=" /repo/$(basename "$pkg")"
-        done
-        docker run --rm -v "$OUTPUT_DIR:/repo" "$DOCKER_IMAGE" \
-            bash -c "repo-add /repo/custom-kernel.db.tar.zst $pkg_args" 2>&1
-    fi
+    # repo-add runs inside the container (pacman-contrib); the host is Ubuntu.
+    local pkg_args=""
+    for pkg in "${NEW_PKGS[@]}"; do
+        pkg_args+=" /repo/$(basename "$pkg")"
+    done
+    docker run --rm -v "$OUTPUT_DIR:/repo" "$DOCKER_IMAGE" \
+        bash -c "repo-add /repo/custom-kernel.db.tar.zst $pkg_args" 2>&1
 }
 
 if run_repo_add | tee "$REPO_ADD_LOG"; then
@@ -166,7 +162,3 @@ echo ""
 echo "==> Build complete!"
 echo "    Packages in: $OUTPUT_DIR/"
 ls -lh "$OUTPUT_DIR"/*.pkg.tar.zst 2>/dev/null
-echo ""
-echo "    To install on CachyOS:"
-echo "      scp $OUTPUT_DIR/*.pkg.tar.zst your-machine:/tmp/"
-echo "      sudo pacman -U /tmp/linux-cachyos-*.pkg.tar.zst"

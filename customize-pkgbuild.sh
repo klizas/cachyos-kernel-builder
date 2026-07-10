@@ -41,29 +41,6 @@ sed -i '/^[[:space:]]*cp \.\.\/config \.config/a\
     scripts/config -d APPLE_BCE
 ' "$PKGBUILD"
 
-# --- 1d. Fix buggy macsmc-hwmon resume (t2linux PR#48, pending merge) ---
-# CachyOS bakes the pre-PR#48 3008-hwmon-macsmc intel-mac patch into its source
-# tarball. That probe() never calls platform_set_drvdata(), so the .resume
-# handler reads NULL via dev_get_drvdata() and panics on resume on Intel T2
-# Macs. Inject the one-line fix into prepare(), anchored on the same config-copy
-# line. Idempotent: the grep guard makes it a no-op once CachyOS ships the fixed
-# patch, so it survives a future kernel bump without breaking the build.
-# Use sed's `r` (read-file) command so the snippet — which itself contains a
-# sed invocation with \t and \n — is inserted verbatim, no nested escaping.
-MACSMC_SNIPPET="$(mktemp)"
-cat > "$MACSMC_SNIPPET" << 'MACSMC_FIX'
-
-    ### Fix macsmc-hwmon resume NULL deref (t2linux PR#48, pending merge)
-    if [ -f drivers/hwmon/macsmc-hwmon.c ] && \
-       ! grep -q 'platform_set_drvdata(pdev, hwmon)' drivers/hwmon/macsmc-hwmon.c; then
-        echo "Patching macsmc-hwmon resume drvdata (pre-PR#48 CachyOS source)..."
-        sed -i 's/\thwmon->smc = smc;/&\n\tplatform_set_drvdata(pdev, hwmon);/' \
-            drivers/hwmon/macsmc-hwmon.c
-    fi
-MACSMC_FIX
-sed -i "/^[[:space:]]*cp \.\.\/config \.config/r $MACSMC_SNIPPET" "$PKGBUILD"
-rm -f "$MACSMC_SNIPPET"
-
 # --- 2. Add custom patches to source array ---
 # The prepare() function already applies all .patch files from source,
 # so we just need to add ours. We append after the source=() block closes.
