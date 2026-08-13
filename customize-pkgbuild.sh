@@ -50,13 +50,15 @@ cat >> "$PKGBUILD" << 'PATCH_SOURCES'
 # --- Custom T2 MacBook patches ---
 source+=(
     "0001-amdgpu-mclk-override.patch"
+    "0001-amdgpu-navi14-athub-pg.patch"
+    "0001-amdgpu-navi14-dfll-pll-shutdown.patch"
     "0001-brcmfmac-suspend-fix.patch"
     "0001-touchbar-suspend-resume.patch"
     "0001-x86-resume-cached-cpu-bringup.patch"
     "0001-macsmc-hwmon-resume-null-deref.patch"
     "0001-xhci-pci-t2-titan-ridge-no-runtime-pm.patch"
 )
-sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP)
+sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
 PATCH_SOURCES
 
 # --- 3. Add apple-bce-drv build to build() ---

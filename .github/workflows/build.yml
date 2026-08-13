@@ -64,7 +64,9 @@ jobs:
           # user (uid 1000); the runner-owned output/ dir blocks that. World-
           # writable dir lets the container create/replace/delete; host-side
           # cleanup still works (unlink is governed by dir write perm).
-          chmod 777 output
+          # Recursive because a forced same-version rebuild overwrites assets
+          # restored from the release, and cp/repo-add open those in place.
+          chmod -R 777 output
           if [ "${{ inputs.force }}" = "true" ]; then
             ./build.sh --force
           else
