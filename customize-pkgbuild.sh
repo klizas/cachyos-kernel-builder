@@ -28,17 +28,35 @@ sed -i 's/^pkgbase="linux-\$_pkgsuffix"/pkgbase="linux-cachyos-t2"/' "$PKGBUILD"
 sed -i '/replaces=(linux-cachyos-lto)/d' "$PKGBUILD"
 sed -i '/replaces=(linux-cachyos-lto-headers)/d' "$PKGBUILD"
 
-# --- 1c. Disable in-tree apple-bce (CachyOS ships a buggy version) ---
+# --- 1c. Disable in-tree T2 BCE drivers (we ship out-of-tree apple-bce) ---
 # We install our own apple-bce.ko into extramodules (steps 3-5 below).
-# CONFIG_APPLE_BCE=m would also build drivers/staging/apple-bce/apple-bce.ko
+# CONFIG_APPLE_BCE=m (<= 7.1) also builds drivers/staging/apple-bce/apple-bce.ko
 # inside the kernel tree, producing two modules with the same name in one
-# package. Disable it here so only our out-of-tree build ships.
+# package. From 7.2 CachyOS replaced staging/apple-bce with staging/t2bce, so
+# CONFIG_T2BCE_* builds t2bce_core, which claims the same PCI device
+# 106b:1801 as apple-bce. Disable both families so only our module binds.
 # Anchor: insert right after `cp ../config .config` in prepare(), before
 # any `scripts/config` calls or `make prepare` reconciles the config.
 sed -i '/^[[:space:]]*cp \.\.\/config \.config/a\
 \
-    ### Disable in-tree apple-bce (we ship out-of-tree klizas/apple-bce-drv)\
-    scripts/config -d APPLE_BCE
+    ### Disable in-tree T2 BCE drivers (we ship out-of-tree klizas/apple-bce-drv)\
+    scripts/config -d APPLE_BCE\
+    scripts/config -d T2BCE_VHCI -d T2BCE_AUDIO -d T2BCE_CORE -d T2BCE_DMA
+' "$PKGBUILD"
+
+# --- 1d. Fail the build if an in-tree BCE driver survived ---
+# `scripts/config -d` on a symbol that no longer exists is a silent no-op, so a
+# rename upstream (apple-bce -> t2bce happened in 7.2) would otherwise ship a
+# conflicting in-tree module unnoticed. Anchor: after prepare() reconciles the
+# config with `make prepare` / `make config`.
+sed -i '/^[[:space:]]*diff -u \.\.\/config \.config || :/a\
+\
+    ### Guard: no in-tree BCE driver may be enabled\
+    if grep -qE "^CONFIG_(APPLE_BCE|T2BCE_[A-Z_]+)=" .config; then\
+        echo "ERROR: in-tree BCE driver still enabled, it would conflict with out-of-tree apple-bce:" >\&2\
+        grep -E "^CONFIG_(APPLE_BCE|T2BCE_[A-Z_]+)=" .config >\&2\
+        exit 1\
+    fi
 ' "$PKGBUILD"
 
 # --- 2. Add custom patches to source array ---
