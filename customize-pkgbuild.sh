@@ -70,6 +70,7 @@ source+=(
     "0001-amdgpu-mclk-override.patch"
     "0001-amdgpu-navi14-athub-pg.patch"
     "0001-amdgpu-navi14-dfll-pll-shutdown.patch"
+    "0001-amdgpu-navi14-uclk-hard-max.patch"
     "0001-brcmfmac-suspend-fix.patch"
     "0002-brcmfmac-resume-liveness-probe.patch"
     "0001-touchbar-suspend-resume.patch"
@@ -78,7 +79,7 @@ source+=(
     "0001-appletbdrm-zlp-pad.patch"
     "0001-acpi-sbs-not-charging.patch"
 )
-sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
+sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
 PATCH_SOURCES
 
 # --- 3. Add apple-bce-drv build to build() ---
