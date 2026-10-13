@@ -80,8 +80,9 @@ source+=(
     "0001-appletbdrm-kzalloc-request.patch"
     "0001-acpi-sbs-not-charging.patch"
     "0002-acpi-sbs-refresh-full-charge-capacity.patch"
+    "0003-acpi-sbs-relative-state-of-charge.patch"
 )
-sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
+sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
 PATCH_SOURCES
 
 # --- 3. Add apple-bce-drv build to build() ---
