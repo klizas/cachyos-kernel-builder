@@ -89,8 +89,9 @@ source+=(
     "0001-appletbdrm-zlp-pad.patch"
     "0001-appletbdrm-kzalloc-request.patch"
     "0001-applesmc-t2-smc-battery.patch"
+    "0002-applesmc-t2-shutdown-cause.patch"
 )
-sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
+sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
 PATCH_SOURCES
 
 # --- 3. Add apple-bce-drv build to build() ---
