@@ -44,6 +44,16 @@ sed -i '/^[[:space:]]*cp \.\.\/config \.config/a\
     scripts/config -d T2BCE_VHCI -d T2BCE_AUDIO -d T2BCE_CORE -d T2BCE_DMA
 ' "$PKGBUILD"
 
+# --- 1c2. Disable ACPI SBS (applesmc-t2 provides BAT0 from SMC keys) ---
+# sbs reads the gauge over the EC SMBus, ~150-230 EC GPEs per refresh.
+# 0001-applesmc-t2-smc-battery.patch registers BAT0 from the SMC instead,
+# and sbs would take the name first. Drops sbs.ko and sbshc.ko.
+sed -i '/^[[:space:]]*cp \.\.\/config \.config/a\
+\
+    ### Disable ACPI SBS (applesmc-t2 provides BAT0)\
+    scripts/config -d ACPI_SBS
+' "$PKGBUILD"
+
 # --- 1d. Fail the build if an in-tree BCE driver survived ---
 # `scripts/config -d` on a symbol that no longer exists is a silent no-op, so a
 # rename upstream (apple-bce -> t2bce happened in 7.2) would otherwise ship a
@@ -78,11 +88,9 @@ source+=(
     "0001-xhci-pci-t2-titan-ridge-no-runtime-pm.patch"
     "0001-appletbdrm-zlp-pad.patch"
     "0001-appletbdrm-kzalloc-request.patch"
-    "0001-acpi-sbs-not-charging.patch"
-    "0002-acpi-sbs-refresh-full-charge-capacity.patch"
-    "0003-acpi-sbs-relative-state-of-charge.patch"
+    "0001-applesmc-t2-smc-battery.patch"
 )
-sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
+sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
 PATCH_SOURCES
 
 # --- 3. Add apple-bce-drv build to build() ---
