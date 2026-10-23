@@ -90,8 +90,9 @@ source+=(
     "0001-xhci-pci-t2-titan-ridge-no-runtime-pm.patch"
     "0001-appletbdrm-zlp-pad.patch"
     "0001-appletbdrm-kzalloc-request.patch"
+    "0001-appletbdrm-reset-free-old-state.patch"
 )
-sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
+sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
 PATCH_SOURCES
 
 # --- 3. Add apple-bce-drv build to build() ---
