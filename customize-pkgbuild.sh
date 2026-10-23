@@ -34,14 +34,15 @@ sed -i '/replaces=(linux-cachyos-lto-headers)/d' "$PKGBUILD"
 # inside the kernel tree, producing two modules with the same name in one
 # package. From 7.2 CachyOS replaced staging/apple-bce with staging/t2bce, so
 # CONFIG_T2BCE_* builds t2bce_core, which claims the same PCI device
-# 106b:1801 as apple-bce. Disable both families so only our module binds.
+# 106b:1801 as apple-bce. 7.3 adds T2BCE_AVE on top of t2bce_core.
+# Disable both families so only our module binds.
 # Anchor: insert right after `cp ../config .config` in prepare(), before
 # any `scripts/config` calls or `make prepare` reconciles the config.
 sed -i '/^[[:space:]]*cp \.\.\/config \.config/a\
 \
     ### Disable in-tree T2 BCE drivers (we ship out-of-tree klizas/apple-bce-drv)\
     scripts/config -d APPLE_BCE\
-    scripts/config -d T2BCE_VHCI -d T2BCE_AUDIO -d T2BCE_CORE -d T2BCE_DMA
+    scripts/config -d T2BCE_VHCI -d T2BCE_AUDIO -d T2BCE_AVE -d T2BCE_CORE -d T2BCE_DMA
 ' "$PKGBUILD"
 
 # --- 1c2. Disable ACPI SBS (applesmc-t2 provides BAT0 from SMC keys) ---
