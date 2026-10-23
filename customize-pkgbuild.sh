@@ -92,8 +92,9 @@ source+=(
     "0001-appletbdrm-kzalloc-request.patch"
     "0001-appletbdrm-reset-free-old-state.patch"
     "0001-macsmc-acpi-shutdown-cause.patch"
+    "0001-macsmc-power-design-capacity.patch"
 )
-sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
+sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
 PATCH_SOURCES
 
 # --- 3. Add apple-bce-drv build to build() ---
