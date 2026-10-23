@@ -45,13 +45,14 @@ sed -i '/^[[:space:]]*cp \.\.\/config \.config/a\
     scripts/config -d T2BCE_VHCI -d T2BCE_AUDIO -d T2BCE_AVE -d T2BCE_CORE -d T2BCE_DMA
 ' "$PKGBUILD"
 
-# --- 1c2. Disable ACPI SBS (applesmc-t2 provides BAT0 from SMC keys) ---
+# --- 1c2. Disable ACPI SBS (macsmc-power provides the battery from SMC keys) ---
 # sbs reads the gauge over the EC SMBus, ~150-230 EC GPEs per refresh.
-# 0001-applesmc-t2-smc-battery.patch registers BAT0 from the SMC instead,
-# and sbs would take the name first. Drops sbs.ko and sbshc.ko.
+# From 7.3 macsmc-power registers macsmc-battery from the SMC instead
+# (<= 7.2: 0001-applesmc-t2-smc-battery.patch registered BAT0), and sbs
+# would add a second battery. Drops sbs.ko and sbshc.ko.
 sed -i '/^[[:space:]]*cp \.\.\/config \.config/a\
 \
-    ### Disable ACPI SBS (applesmc-t2 provides BAT0)\
+    ### Disable ACPI SBS (macsmc-power provides the battery)\
     scripts/config -d ACPI_SBS
 ' "$PKGBUILD"
 
@@ -89,10 +90,8 @@ source+=(
     "0001-xhci-pci-t2-titan-ridge-no-runtime-pm.patch"
     "0001-appletbdrm-zlp-pad.patch"
     "0001-appletbdrm-kzalloc-request.patch"
-    "0001-applesmc-t2-smc-battery.patch"
-    "0002-applesmc-t2-shutdown-cause.patch"
 )
-sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
+sha256sums+=(SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP SKIP)
 PATCH_SOURCES
 
 # --- 3. Add apple-bce-drv build to build() ---
